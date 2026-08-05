@@ -67,3 +67,12 @@ php artisan migrate:fresh --seed
 ```
 
 SQLite là cấu hình mặc định trong `.env`; với MySQL, cập nhật các biến `DB_*` rồi tạo database trước khi chạy lệnh trên.
+
+## Repository và phân công nhánh
+
+Repository cục bộ đã được khởi tạo với nhánh `main`. Các nhánh chức năng đã tạo:
+
+- `feature/user-student`: người dùng và hồ sơ sinh viên.
+- `feature/dormitory-catalog`: tòa nhà, phòng, giường.
+- `feature/registration-allocation`: đăng ký, xét duyệt, phân chỗ, hợp đồng.
+- `feature/billing-violations`: điện nước, hóa đơn, vi phạm.
