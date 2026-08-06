@@ -91,7 +91,7 @@ Trưởng nhóm.
 
 ### Người review
 
-Thành viên 2.
+Thành viên 2..
 
 ---
 
