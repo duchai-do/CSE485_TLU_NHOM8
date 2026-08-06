@@ -1,0 +1,6 @@
+@extends('layouts.app')
+@section('content')
+<div class="actions"><h1>Hóa đơn</h1><a href="{{ route('invoices.create') }}">+ Tạo hóa đơn</a></div>
+<form method="get"><input type="number" name="month" min="1" max="12" placeholder="Tháng" value="{{ request('month') }}"><input type="number" name="year" min="2000" placeholder="Năm" value="{{ request('year') }}"><select name="status"><option value="">Mọi trạng thái</option>@foreach(['unpaid'=>'Chưa thanh toán','paid'=>'Đã thanh toán','overdue'=>'Quá hạn','cancelled'=>'Đã hủy'] as $key=>$label)<option value="{{ $key }}" @selected(request('status') === $key)>{{ $label }}</option>@endforeach</select><button>Lọc</button></form>
+<table><tr><th>Mã</th><th>Sinh viên</th><th>Kỳ hóa đơn</th><th>Tổng</th><th>Trạng thái</th><th></th></tr>@forelse($invoices as $invoice)<tr><td>{{ $invoice->invoice_code }}</td><td>{{ $invoice->contract->allocation->student->user->name ?? '—' }}</td><td>{{ $invoice->billing_month }}/{{ $invoice->billing_year }}</td><td>{{ number_format($invoice->total_amount) }} đ</td><td>{{ $invoice->status }}</td><td><a href="{{ route('invoices.show',$invoice) }}">Xem</a></td></tr>@empty<tr><td colspan="6">Chưa có hóa đơn.</td></tr>@endforelse</table>{{ $invoices->links() }}
+@endsection
