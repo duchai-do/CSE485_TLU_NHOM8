@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Building extends Model
 {
@@ -12,7 +11,7 @@ class Building extends Model
 
     protected $fillable = ['code', 'name', 'description', 'status'];
 
-    public function rooms(): HasMany
+    public function rooms()
     {
         return $this->hasMany(Room::class);
     }
