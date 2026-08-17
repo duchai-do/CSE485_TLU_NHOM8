@@ -3,6 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\Allocation;
+use App\Models\Bed;
+use App\Models\RoomRegistration;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -10,24 +13,61 @@ class AllocationSeeder extends Seeder
 {
     public function run(): void
     {
-        $registration = DB::table('room_registrations')->orderBy('id')->first();
-        $bed = DB::table('beds')->where('status', 'available')->orderBy('id')->first()
-            ?? DB::table('beds')->orderBy('id')->first();
-        $allocator = DB::table('users')->orderBy('id')->first();
+        $allocator = User::query()
+            ->whereIn('role', ['admin', 'staff'])
+            ->where('status', true)
+            ->orderBy('id')
+            ->first()
+            ?? User::query()->orderBy('id')->first();
 
-        if (! $registration || ! $bed || ! $allocator) {
+        $registrations = RoomRegistration::query()
+            ->with('student')
+            ->whereIn('status', ['pending', 'approved'])
+            ->whereDoesntHave('allocation')
+            ->orderByDesc('priority_score')
+            ->orderBy('id')
+            ->get();
+
+        $beds = Bed::query()
+            ->with('room')
+            ->where('status', 'empty')
+            ->orderBy('id')
+            ->get();
+
+        if (! $allocator || $registrations->isEmpty() || $beds->isEmpty()) {
             $this->command?->warn(
-                'Bỏ qua AllocationSeeder: cần có dữ liệu room_registrations, beds và users trước.'
+                'Bỏ qua AllocationSeeder: cần users, room_registrations và beds trống trước.'
             );
             return;
         }
 
-        DB::transaction(function () use ($registration, $bed, $allocator): void {
+        $selectedRegistration = null;
+        $selectedBed = null;
+
+        foreach ($registrations as $registration) {
+            foreach ($beds as $bed) {
+                if ($this->genderMatches($registration->student?->gender, $bed->room?->type)
+                    && $this->roomTypeMatches($registration->preferred_room_type, $bed->room?->capacity)) {
+                    $selectedRegistration = $registration;
+                    $selectedBed = $bed;
+                    break 2;
+                }
+            }
+        }
+
+        if (! $selectedRegistration || ! $selectedBed) {
+            $this->command?->warn(
+                'Bỏ qua AllocationSeeder: chưa có đăng ký và giường tương thích giới tính/loại phòng.'
+            );
+            return;
+        }
+
+        DB::transaction(function () use ($selectedRegistration, $selectedBed, $allocator): void {
             Allocation::updateOrCreate(
-                ['registration_id' => $registration->id],
+                ['registration_id' => $selectedRegistration->id],
                 [
-                    'student_id' => $registration->student_id,
-                    'bed_id' => $bed->id,
+                    'student_id' => $selectedRegistration->student_id,
+                    'bed_id' => $selectedBed->id,
                     'allocated_by' => $allocator->id,
                     'start_date' => now()->startOfMonth()->toDateString(),
                     'end_date' => now()->addMonths(5)->endOfMonth()->toDateString(),
@@ -36,21 +76,44 @@ class AllocationSeeder extends Seeder
                 ]
             );
 
-            DB::table('room_registrations')
-                ->where('id', $registration->id)
-                ->update([
-                    'status' => 'approved',
-                    'reviewed_by' => $allocator->id,
-                    'reviewed_at' => now(),
-                    'updated_at' => now(),
-                ]);
+            $selectedRegistration->update([
+                'status' => 'allocated',
+                'reviewed_by' => $allocator->id,
+                'reviewed_at' => now(),
+                'rejection_reason' => null,
+            ]);
 
-            DB::table('beds')
-                ->where('id', $bed->id)
-                ->update([
-                    'status' => 'occupied',
-                    'updated_at' => now(),
-                ]);
+            $selectedBed->update(['status' => 'occupied']);
         });
+    }
+
+    private function genderMatches(?string $studentGender, ?string $roomType): bool
+    {
+        if ($roomType === 'other') {
+            return true;
+        }
+
+        $normalized = mb_strtolower(trim((string) $studentGender));
+
+        $studentType = match ($normalized) {
+            'nam', 'male', 'm' => 'male',
+            'nữ', 'nu', 'female', 'f' => 'female',
+            default => null,
+        };
+
+        return $studentType !== null && $studentType === $roomType;
+    }
+
+    private function roomTypeMatches(?string $preferredRoomType, ?int $capacity): bool
+    {
+        if (! $preferredRoomType || ! $capacity) {
+            return true;
+        }
+
+        if (! preg_match('/(\d+)/u', $preferredRoomType, $matches)) {
+            return true;
+        }
+
+        return (int) $matches[1] === (int) $capacity;
     }
 }
