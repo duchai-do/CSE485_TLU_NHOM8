@@ -1,8 +1,142 @@
 @extends('layouts.app')
+
+@section('title', 'Tạo hóa đơn')
+
 @section('content')
-<h1>Tạo hóa đơn</h1><form method="post" action="{{ route('invoices.store') }}">@csrf
-<p><label>Hợp đồng <select name="contract_id" required><option value="">-- Chọn hợp đồng --</option>@foreach($contracts as $contract)<option value="{{ $contract->id }}" @selected(old('contract_id') == $contract->id)>{{ $contract->contract_code }} — {{ $contract->allocation->student->user->name ?? '' }}</option>@endforeach</select></label></p>
-<p><label>Mã hóa đơn (để trống để tự tạo) <input name="invoice_code" value="{{ old('invoice_code') }}"></label></p><p><label>Tháng <input type="number" name="billing_month" min="1" max="12" value="{{ old('billing_month', now()->month) }}" required></label><label>Năm <input type="number" name="billing_year" min="2000" value="{{ old('billing_year', now()->year) }}" required></label><label>Hạn thanh toán <input type="date" name="due_date" value="{{ old('due_date') }}"></label></p>
-<h2>Chi tiết khoản tiền</h2><table id="items"><thead><tr><th>Loại</th><th>Mô tả</th><th>Số lượng</th><th>Đơn giá</th><th></th></tr></thead><tbody><tr><td><input name="items[0][item_type]" value="room_fee" required></td><td><input name="items[0][description]"></td><td><input type="number" step="0.01" min="0.01" name="items[0][quantity]" value="1" required></td><td><input type="number" step="0.01" min="0" name="items[0][unit_price]" required></td><td><button type="button" onclick="this.closest('tr').remove()">Xóa</button></td></tr></tbody></table><button type="button" id="add-item">+ Thêm khoản</button><button type="submit">Tạo hóa đơn</button></form>
-<script>let i=1;document.getElementById('add-item').onclick=()=>document.querySelector('#items tbody').insertAdjacentHTML('beforeend',`<tr><td><input name="items[${i}][item_type]" value="other" required></td><td><input name="items[${i}][description]"></td><td><input type="number" step="0.01" min="0.01" name="items[${i}][quantity]" value="1" required></td><td><input type="number" step="0.01" min="0" name="items[${i}][unit_price]" required></td><td><button type="button" onclick="this.closest('tr').remove()">Xóa</button></td></tr>`),i++;</script>
+<div class="page-header">
+    <div>
+        <h1>Tạo hóa đơn</h1>
+        <p>
+            Chọn hợp đồng và kỳ thanh toán.
+            Hệ thống sẽ tự lấy tiền phòng + chỉ số điện + chỉ số nước.
+        </p>
+    </div>
+</div>
+
+<form method="POST" action="{{ route('invoices.store') }}">
+    @csrf
+
+    <div class="card">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Hợp đồng *</label>
+
+                <select name="contract_id" required>
+                    <option value="">
+                        -- Chọn hợp đồng đang hoạt động --
+                    </option>
+
+                    @foreach($contracts as $contract)
+                        @php
+                            $allocation = $contract->allocation;
+                            $student = $allocation?->student;
+                            $room = $allocation?->bed?->room;
+                            $building = $room?->building;
+                        @endphp
+
+                        <option
+                            value="{{ $contract->id }}"
+                            @selected(old('contract_id') == $contract->id)
+                        >
+                            {{ $contract->contract_code }}
+                            - {{ $student?->user?->name ?? 'Không rõ sinh viên' }}
+                            - {{ $building?->name ?? '' }}
+                            / {{ $room?->room_number ?? '' }}
+                        </option>
+                    @endforeach
+                </select>
+
+                @if($contracts->isEmpty())
+                    <small class="muted">
+                        Chưa có hợp đồng active. Hãy lập hợp đồng trước.
+                    </small>
+                @endif
+            </div>
+
+            <div class="form-group">
+                <label>Tháng *</label>
+
+                <input
+                    type="number"
+                    name="billing_month"
+                    min="1"
+                    max="12"
+                    value="{{ old('billing_month', now()->month) }}"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Năm *</label>
+
+                <input
+                    type="number"
+                    name="billing_year"
+                    min="2000"
+                    max="2100"
+                    value="{{ old('billing_year', now()->year) }}"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Hạn thanh toán</label>
+
+                <input
+                    type="date"
+                    name="due_date"
+                    value="{{ old('due_date', now()->addDays(10)->toDateString()) }}"
+                >
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Cách tính hóa đơn</h3>
+
+        <div class="detail-grid">
+            <div class="key">Tiền phòng</div>
+            <div>
+                Lấy tự động từ giá mỗi tháng của hợp đồng.
+            </div>
+
+            <div class="key">Tiền điện</div>
+            <div>
+                (Chỉ số điện mới - chỉ số điện cũ) × đơn giá điện.
+            </div>
+
+            <div class="key">Tiền nước</div>
+            <div>
+                (Chỉ số nước mới - chỉ số nước cũ) × đơn giá nước.
+            </div>
+
+            <div class="key">Tổng hóa đơn</div>
+            <div>
+                Tiền phòng + tiền điện + tiền nước.
+            </div>
+        </div>
+
+        <div class="alert alert-info mt-3 mb-0">
+            Phải nhập chỉ số điện nước đúng phòng, đúng tháng/năm
+            trước khi tạo hóa đơn.
+        </div>
+    </div>
+
+    <div class="actions">
+        <button
+            class="btn btn-primary"
+            type="submit"
+            @disabled($contracts->isEmpty())
+        >
+            Tạo hóa đơn tự động
+        </button>
+
+        <a
+            class="btn btn-light"
+            href="{{ route('invoices.index') }}"
+        >
+            Quay lại
+        </a>
+    </div>
+</form>
 @endsection

@@ -23,40 +23,47 @@ class BuildingRoomBedSeeder extends Seeder
             ]
         );
 
-        $room101 = Room::updateOrCreate(
+        // Phòng nam 4 người
+        $this->seedRoom(
+            $buildingA->id,
+            'P101',
+            'male',
+            4,
+            500000,
             [
-                'building_id' => $buildingA->id,
-                'room_number' => 'P101',
-            ],
-            [
-                'type' => 'male',
-                'capacity' => 4,
-                'price' => 500000,
-                'status' => 'available',
+                'G01' => 'occupied',
+                'G02' => 'empty',
+                'G03' => 'maintenance',
+                'G04' => 'empty',
             ]
         );
 
-        $this->createBedsIfMissing($room101, 4, [
-            'G01' => 'occupied',
-            'G02' => 'empty',
-            'G03' => 'maintenance',
-            'G04' => 'empty',
-        ]);
-
-        $room102 = Room::updateOrCreate(
-            [
-                'building_id' => $buildingA->id,
-                'room_number' => 'P102',
-            ],
-            [
-                'type' => 'male',
-                'capacity' => 6,
-                'price' => 450000,
-                'status' => 'available',
-            ]
+        // Phòng nam 6 người
+        $this->seedRoom(
+            $buildingA->id,
+            'P102',
+            'male',
+            6,
+            450000
         );
 
-        $this->createBedsIfMissing($room102, 6);
+        // BỔ SUNG phòng nam 4 người để luôn có giường demo
+        $this->seedRoom(
+            $buildingA->id,
+            'P103',
+            'male',
+            4,
+            500000
+        );
+
+        // BỔ SUNG thêm phòng nam 4 người
+        $this->seedRoom(
+            $buildingA->id,
+            'P104',
+            'male',
+            4,
+            500000
+        );
 
         // =========================
         // TÒA B - KHU NỮ
@@ -70,35 +77,68 @@ class BuildingRoomBedSeeder extends Seeder
             ]
         );
 
-        $room201 = Room::updateOrCreate(
+        // Phòng nữ 4 người
+        $this->seedRoom(
+            $buildingB->id,
+            'P201',
+            'female',
+            4,
+            500000
+        );
+
+        // Phòng nữ 6 người
+        $this->seedRoom(
+            $buildingB->id,
+            'P202',
+            'female',
+            6,
+            450000
+        );
+
+        // BỔ SUNG thêm phòng nữ để demo không bị hết giường
+        $this->seedRoom(
+            $buildingB->id,
+            'P203',
+            'female',
+            4,
+            500000
+        );
+
+        $this->seedRoom(
+            $buildingB->id,
+            'P204',
+            'female',
+            6,
+            450000
+        );
+    }
+
+    private function seedRoom(
+        int $buildingId,
+        string $roomNumber,
+        string $type,
+        int $capacity,
+        float|int $price,
+        array $initialStatuses = []
+    ): void {
+        $room = Room::updateOrCreate(
             [
-                'building_id' => $buildingB->id,
-                'room_number' => 'P201',
+                'building_id' => $buildingId,
+                'room_number' => $roomNumber,
             ],
             [
-                'type' => 'female',
-                'capacity' => 4,
-                'price' => 500000,
+                'type' => $type,
+                'capacity' => $capacity,
+                'price' => $price,
                 'status' => 'available',
             ]
         );
 
-        $this->createBedsIfMissing($room201, 4);
-
-        $room202 = Room::updateOrCreate(
-            [
-                'building_id' => $buildingB->id,
-                'room_number' => 'P202',
-            ],
-            [
-                'type' => 'female',
-                'capacity' => 6,
-                'price' => 450000,
-                'status' => 'available',
-            ]
+        $this->createBedsIfMissing(
+            $room,
+            $capacity,
+            $initialStatuses
         );
-
-        $this->createBedsIfMissing($room202, 6);
     }
 
     private function createBedsIfMissing(
@@ -107,10 +147,14 @@ class BuildingRoomBedSeeder extends Seeder
         array $initialStatuses = []
     ): void {
         for ($i = 1; $i <= $capacity; $i++) {
-            $bedNumber = 'G' . str_pad((string) $i, 2, '0', STR_PAD_LEFT);
+            $bedNumber = 'G' . str_pad(
+                (string) $i,
+                2,
+                '0',
+                STR_PAD_LEFT
+            );
 
-            // firstOrCreate để không ghi đè trạng thái giường
-            // nếu giường đã được xếp cho sinh viên trước đó.
+            // Không ghi đè trạng thái nếu giường đã tồn tại.
             Bed::firstOrCreate(
                 [
                     'room_id' => $room->id,
