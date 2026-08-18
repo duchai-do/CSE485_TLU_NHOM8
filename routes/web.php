@@ -5,6 +5,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RoomRegistrationController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\BuildingController; // Thêm Controller Tòa nhà
+use App\Http\Controllers\RoomController;     // Thêm Controller Phòng
+use App\Http\Controllers\BedController;      // Thêm Controller Giường
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -22,6 +25,11 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:admin,staff')->group(function () {
         Route::resource('students', StudentController::class);
+        
+        // 👉 TÍCH HỢP QUẢN LÝ TÒA NHÀ - PHÒNG - GIƯỜNG VÀO ĐÂY
+        Route::resource('buildings', BuildingController::class);
+        Route::resource('rooms', RoomController::class);
+        Route::resource('beds', BedController::class);
     });
 
     Route::post('/room-registrations/{roomRegistration}/approve', [RoomRegistrationController::class, 'approve'])
