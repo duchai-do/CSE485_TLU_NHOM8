@@ -39,4 +39,9 @@ class RoomRegistration extends Model
     {
         return $this->belongsTo(User::class, 'reviewed_by');
     }
+
+    public function allocation()
+    {
+        return $this->hasOne(Allocation::class, 'registration_id');
+    }
 }
