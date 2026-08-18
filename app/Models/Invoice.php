@@ -8,4 +8,8 @@ class Invoice extends Model {
     public function contract(): BelongsTo { return $this->belongsTo(Contract::class); }
     public function creator(): BelongsTo { return $this->belongsTo(User::class, 'created_by'); }
     public function items(): HasMany { return $this->hasMany(InvoiceItem::class); }
+    public function getStatusLabelAttribute(): string
+    {
+        return ['unpaid' => 'Chưa thanh toán', 'paid' => 'Đã thanh toán', 'overdue' => 'Quá hạn', 'cancelled' => 'Đã hủy'][$this->status] ?? $this->status;
+    }
 }
