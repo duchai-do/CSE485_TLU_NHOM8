@@ -34,3 +34,5 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('room-registrations', RoomRegistrationController::class);
 });
+
+require __DIR__.'/member3.php';
