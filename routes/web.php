@@ -12,3 +12,5 @@ Route::resource('beds', BedController::class)->only(['index', 'store', 'destroy'
 Route::get('/', function () {
     return redirect()->route('buildings.index');
 });
+
+require __DIR__.'/member3.php';

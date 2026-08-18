@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class RoomRegistration extends Model
 {
@@ -37,5 +38,10 @@ class RoomRegistration extends Model
     public function reviewer()
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function allocation(): HasOne
+    {
+        return $this->hasOne(Allocation::class, 'registration_id');
     }
 }
