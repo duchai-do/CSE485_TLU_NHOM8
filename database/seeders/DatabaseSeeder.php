@@ -15,7 +15,9 @@ class DatabaseSeeder extends Seeder
     {
         $now = now();
 
-        // 1. USERS
+        // =========================================================
+        // 1. USERS - Thành viên 1
+        // =========================================================
         DB::table('users')->insert([
             [
                 'name' => 'Quản trị viên',
@@ -63,10 +65,20 @@ class DatabaseSeeder extends Seeder
             ],
         ]);
 
-        // 2. STUDENTS
-        $anUserId = DB::table('users')->where('email', 'an@tlu.edu.vn')->value('id');
-        $binhUserId = DB::table('users')->where('email', 'binh@tlu.edu.vn')->value('id');
-        $cuongUserId = DB::table('users')->where('email', 'cuong@tlu.edu.vn')->value('id');
+        // =========================================================
+        // 2. STUDENTS - Thành viên 1
+        // =========================================================
+        $anUserId = DB::table('users')
+            ->where('email', 'an@tlu.edu.vn')
+            ->value('id');
+
+        $binhUserId = DB::table('users')
+            ->where('email', 'binh@tlu.edu.vn')
+            ->value('id');
+
+        $cuongUserId = DB::table('users')
+            ->where('email', 'cuong@tlu.edu.vn')
+            ->value('id');
 
         DB::table('students')->insert([
             [
@@ -110,11 +122,24 @@ class DatabaseSeeder extends Seeder
             ],
         ]);
 
-        // 3. ROOM REGISTRATIONS
-        $anStudentId = DB::table('students')->where('student_code', 'SV001')->value('id');
-        $binhStudentId = DB::table('students')->where('student_code', 'SV002')->value('id');
-        $cuongStudentId = DB::table('students')->where('student_code', 'SV003')->value('id');
-        $adminId = DB::table('users')->where('email', 'admin@tlu.edu.vn')->value('id');
+        // =========================================================
+        // 3. ROOM REGISTRATIONS - Thành viên 1
+        // =========================================================
+        $anStudentId = DB::table('students')
+            ->where('student_code', 'SV001')
+            ->value('id');
+
+        $binhStudentId = DB::table('students')
+            ->where('student_code', 'SV002')
+            ->value('id');
+
+        $cuongStudentId = DB::table('students')
+            ->where('student_code', 'SV003')
+            ->value('id');
+
+        $adminId = DB::table('users')
+            ->where('email', 'admin@tlu.edu.vn')
+            ->value('id');
 
         DB::table('room_registrations')->insert([
             [
@@ -159,6 +184,20 @@ class DatabaseSeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
+        ]);
+
+        // =========================================================
+        // 4. BUILDINGS - ROOMS - BEDS - Thành viên 2
+        // =========================================================
+        $this->call([
+            BuildingRoomBedSeeder::class,
+        ]);
+
+        // =========================================================
+        // 5. ALLOCATIONS - CONTRACTS - VIOLATIONS - Thành viên 3
+        // =========================================================
+        $this->call([
+            Member3Seeder::class,
         ]);
     }
 }
