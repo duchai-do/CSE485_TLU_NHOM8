@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Member3\StoreAllocationRequest;
+use App\Http\Requests\Member3\UpdateAllocationRequest;
 use App\Models\Allocation;
 use App\Models\Bed;
+use App\Models\Room;
 use App\Models\RoomRegistration;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -15,10 +17,11 @@ use Illuminate\View\View;
 
 class AllocationController extends Controller
 {
-    public function registrations(): View
+    public function registrations(Request $request): View
     {
         $registrations = RoomRegistration::query()
             ->with(['student.user', 'reviewer', 'allocation.bed.room.building'])
+            ->when($request->filled('status'), fn ($query) => $query->where('status', (string) $request->input('status')))
             ->orderByDesc('priority_score')
             ->orderByDesc('created_at')
             ->get();
@@ -62,7 +65,7 @@ class AllocationController extends Controller
         return back()->with('success', 'Đã từ chối đơn đăng ký.');
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
         $allocations = Allocation::query()
             ->with([
@@ -72,6 +75,7 @@ class AllocationController extends Controller
                 'allocator',
                 'contract',
             ])
+            ->when($request->filled('status'), fn ($query) => $query->where('status', (string) $request->input('status')))
             ->latest('id')
             ->get();
 
@@ -87,13 +91,7 @@ class AllocationController extends Controller
             ->orderByDesc('priority_score')
             ->get();
 
-        $beds = Bed::query()
-            ->with('room.building')
-            ->where('status', 'empty')
-            ->whereHas('room', fn ($query) => $query->where('status', '!=', 'maintenance'))
-            ->orderBy('room_id')
-            ->orderBy('bed_number')
-            ->get();
+        $beds = $this->availableBeds();
 
         return view('member3.allocations.create', compact('registrations', 'beds'));
     }
@@ -138,6 +136,124 @@ class AllocationController extends Controller
             ->with('success', 'Xếp giường cho sinh viên thành công.');
     }
 
+    public function edit(Allocation $allocation): View|RedirectResponse
+    {
+        $allocation->load(['student.user', 'registration', 'bed.room.building', 'contract']);
+
+        if ($allocation->status !== 'active') {
+            return redirect()
+                ->route('member3.allocations.index')
+                ->with('error', 'Chỉ allocation active mới được chỉnh sửa.');
+        }
+
+        $beds = $this->availableBeds($allocation->bed_id);
+
+        return view('member3.allocations.edit', compact('allocation', 'beds'));
+    }
+
+    public function update(UpdateAllocationRequest $request, Allocation $allocation): RedirectResponse
+    {
+        $data = $request->validated();
+
+        DB::transaction(function () use ($allocation, $data): void {
+            $allocation->load(['bed', 'student', 'registration']);
+            $oldBed = Bed::query()->lockForUpdate()->findOrFail($allocation->bed_id);
+            $newBed = Bed::query()->lockForUpdate()->findOrFail($data['bed_id']);
+
+            $allocation->update([
+                'bed_id' => $newBed->id,
+                'start_date' => $data['start_date'],
+                'end_date' => $data['end_date'] ?? null,
+                'note' => $data['note'] ?? null,
+            ]);
+
+            if ($oldBed->id !== $newBed->id) {
+                $oldBed->update(['status' => 'empty']);
+                $newBed->update(['status' => 'occupied']);
+
+                $this->refreshRoomStatus($oldBed->room_id);
+                $this->refreshRoomStatus($newBed->room_id);
+            }
+        });
+
+        return redirect()
+            ->route('member3.allocations.index')
+            ->with('success', 'Cập nhật xếp giường thành công.');
+    }
+
+    public function end(Allocation $allocation): RedirectResponse
+    {
+        if ($allocation->status !== 'active') {
+            return back()->with('error', 'Allocation này không còn hoạt động.');
+        }
+
+        if ($allocation->contract && $allocation->contract->status === 'active') {
+            return back()->with('error', 'Hãy chấm dứt hợp đồng trước khi kết thúc allocation.');
+        }
+
+        DB::transaction(function () use ($allocation): void {
+            $allocation->load('bed');
+
+            $allocation->update([
+                'status' => 'ended',
+                'end_date' => $allocation->end_date ?: now()->toDateString(),
+            ]);
+
+            if ($allocation->bed) {
+                $allocation->bed->update(['status' => 'empty']);
+                $this->refreshRoomStatus($allocation->bed->room_id);
+            }
+        });
+
+        return back()->with('success', 'Đã kết thúc xếp giường và trả giường về trạng thái trống.');
+    }
+
+    public function cancel(Allocation $allocation): RedirectResponse
+    {
+        if ($allocation->status !== 'active') {
+            return back()->with('error', 'Allocation này không còn hoạt động.');
+        }
+
+        if ($allocation->contract) {
+            return back()->with('error', 'Không thể hủy allocation đã phát sinh hợp đồng.');
+        }
+
+        DB::transaction(function () use ($allocation): void {
+            $allocation->load(['bed', 'registration']);
+
+            $allocation->update([
+                'status' => 'cancelled',
+                'end_date' => now()->toDateString(),
+            ]);
+
+            $allocation->registration?->update(['status' => 'approved']);
+
+            if ($allocation->bed) {
+                $allocation->bed->update(['status' => 'empty']);
+                $this->refreshRoomStatus($allocation->bed->room_id);
+            }
+        });
+
+        return back()->with('success', 'Đã hủy allocation. Đơn đăng ký trở lại trạng thái approved.');
+    }
+
+    private function availableBeds(?int $includeBedId = null)
+    {
+        return Bed::query()
+            ->with('room.building')
+            ->where(function ($query) use ($includeBedId): void {
+                $query->where('status', 'empty');
+
+                if ($includeBedId) {
+                    $query->orWhere('id', $includeBedId);
+                }
+            })
+            ->whereHas('room', fn ($query) => $query->where('status', '!=', 'maintenance'))
+            ->orderBy('room_id')
+            ->orderBy('bed_number')
+            ->get();
+    }
+
     private function actorId(): int
     {
         $id = Auth::id()
@@ -155,7 +271,7 @@ class AllocationController extends Controller
 
     private function refreshRoomStatus(int $roomId): void
     {
-        $room = \App\Models\Room::find($roomId);
+        $room = Room::find($roomId);
 
         if (! $room || $room->status === 'maintenance') {
             return;
