@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Quản lý ký túc xá')</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
     <style>
         * { box-sizing: border-box; }
         body {
@@ -15,14 +19,14 @@
         a { color: inherit; text-decoration: none; }
         .app { min-height: 100vh; display: flex; }
         .sidebar {
-            width: 250px;
+            width: 270px;
             background: #123a63;
             color: white;
             padding: 24px 16px;
             position: fixed;
-            left: 0;
-            top: 0;
-            bottom: 0;
+            inset: 0 auto 0 0;
+            overflow-y: auto;
+            z-index: 1000;
         }
         .brand {
             font-size: 20px;
@@ -41,28 +45,36 @@
         .menu { margin-top: 20px; }
         .menu a {
             display: block;
-            padding: 12px 14px;
-            margin-bottom: 7px;
+            padding: 11px 14px;
+            margin-bottom: 6px;
             border-radius: 8px;
             color: #e8f1fa;
         }
         .menu a:hover, .menu a.active {
             background: rgba(255,255,255,.14);
-            color: #fff;
+            color: white;
+        }
+        .menu-title {
+            padding: 14px 14px 6px;
+            font-size: 11px;
+            text-transform: uppercase;
+            opacity: .65;
+            letter-spacing: .5px;
         }
         .main {
-            margin-left: 250px;
-            width: calc(100% - 250px);
+            margin-left: 270px;
+            width: calc(100% - 270px);
             min-height: 100vh;
         }
         .topbar {
-            height: 68px;
-            background: #fff;
+            min-height: 68px;
+            background: white;
             border-bottom: 1px solid #e5e7eb;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 28px;
+            gap: 15px;
+            padding: 10px 28px;
         }
         .topbar strong { color: #123a63; }
         .content { padding: 28px; }
@@ -73,13 +85,20 @@
             gap: 16px;
             margin-bottom: 22px;
         }
-        .page-header h1 { margin: 0; font-size: 25px; color: #123a63; }
-        .page-header p { margin: 6px 0 0; color: #6b7280; }
+        .page-header h1 {
+            margin: 0;
+            font-size: 25px;
+            color: #123a63;
+        }
+        .page-header p {
+            margin: 6px 0 0;
+            color: #6b7280;
+        }
         .card {
-            background: #fff;
+            background: white;
             border-radius: 12px;
             border: 1px solid #e5e7eb;
-            box-shadow: 0 3px 12px rgba(15, 23, 42, .04);
+            box-shadow: 0 3px 12px rgba(15,23,42,.04);
             padding: 20px;
             margin-bottom: 20px;
         }
@@ -88,14 +107,11 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 16px;
         }
-        .stat { padding: 20px; }
         .stat .number {
             font-size: 31px;
             font-weight: 700;
             color: #123a63;
-            margin-bottom: 7px;
         }
-        .stat .label { color: #6b7280; }
         .form-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -113,64 +129,20 @@
             padding: 10px 12px;
             border: 1px solid #cbd5e1;
             border-radius: 7px;
-            background: #fff;
+            background: white;
             font-size: 14px;
         }
         textarea { min-height: 95px; resize: vertical; }
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #3478b9;
-            box-shadow: 0 0 0 3px rgba(52,120,185,.12);
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
         }
-        .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-        .btn {
-            display: inline-block;
-            border: none;
-            border-radius: 7px;
-            padding: 9px 14px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        .btn-primary { background: #1f6fb2; color: #fff; }
-        .btn-success { background: #198754; color: #fff; }
-        .btn-danger { background: #c0392b; color: #fff; }
-        .btn-warning { background: #d99200; color: #fff; }
-        .btn-secondary { background: #64748b; color: #fff; }
-        .btn-light { background: #e8eef5; color: #24415e; }
         .table-wrap { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td {
-            padding: 12px 10px;
-            border-bottom: 1px solid #e5e7eb;
-            text-align: left;
-            vertical-align: middle;
-            font-size: 14px;
-        }
-        th { background: #f8fafc; color: #475569; }
-        .badge {
-            display: inline-block;
-            border-radius: 999px;
-            padding: 5px 9px;
-            font-size: 12px;
-            font-weight: 700;
-        }
-        .badge-pending { background: #fff3cd; color: #8a6100; }
-        .badge-approved { background: #d1e7dd; color: #0f5132; }
-        .badge-rejected { background: #f8d7da; color: #842029; }
-        .badge-active { background: #d1e7dd; color: #0f5132; }
-        .badge-inactive { background: #e5e7eb; color: #4b5563; }
-        .alert {
-            padding: 12px 15px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-        .alert-success { background: #d1e7dd; color: #0f5132; }
-        .alert-error { background: #f8d7da; color: #842029; }
-        .errors { margin: 8px 0 0; padding-left: 20px; }
         .filters {
             display: grid;
-            grid-template-columns: 2fr repeat(3, 1fr) auto;
+            grid-template-columns: 2fr repeat(3,1fr) auto;
             gap: 10px;
             align-items: end;
         }
@@ -180,18 +152,42 @@
             grid-template-columns: 180px 1fr;
             gap: 10px 18px;
         }
-        .detail-grid .key { font-weight: 700; color: #475569; }
+        .detail-grid .key {
+            font-weight: 700;
+            color: #475569;
+        }
+        .badge-pending { background: #fff3cd; color: #8a6100; }
+        .badge-approved { background: #d1e7dd; color: #0f5132; }
+        .badge-rejected { background: #f8d7da; color: #842029; }
+        .badge-active { background: #d1e7dd; color: #0f5132; }
+        .badge-inactive { background: #e5e7eb; color: #4b5563; }
+        .alert-error {
+            background: #f8d7da;
+            color: #842029;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        .errors { margin: 8px 0 0; padding-left: 20px; }
         .pagination { margin-top: 18px; }
-        .pagination nav { display: flex; }
-        .pagination svg { width: 18px; }
+
         @media (max-width: 900px) {
-            .sidebar { position: static; width: 100%; }
+            .sidebar {
+                position: static;
+                width: 100%;
+            }
             .app { display: block; }
-            .main { margin-left: 0; width: 100%; }
-            .grid, .form-grid, .filters { grid-template-columns: 1fr; }
+            .main {
+                margin-left: 0;
+                width: 100%;
+            }
+            .grid, .form-grid, .filters {
+                grid-template-columns: 1fr !important;
+            }
         }
     </style>
 </head>
+
 <body>
 <div class="app">
     <aside class="sidebar">
@@ -201,55 +197,168 @@
         </div>
 
         <nav class="menu">
-            <a href="{{ route('dashboard') }}"
-               class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                Tổng quan
-            </a>
+            @if(\Illuminate\Support\Facades\Route::has('dashboard'))
+                <a href="{{ route('dashboard') }}"
+                   class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                    Tổng quan
+                </a>
+            @endif
 
             @if(auth()->user()->role === 'admin')
-                <a href="{{ route('users.index') }}"
-                   class="{{ request()->routeIs('users.*') ? 'active' : '' }}">
-                    Tài khoản người dùng
-                </a>
+                @if(\Illuminate\Support\Facades\Route::has('users.index'))
+                    <a href="{{ route('users.index') }}"
+                       class="{{ request()->routeIs('users.*') ? 'active' : '' }}">
+                        Tài khoản người dùng
+                    </a>
+                @endif
             @endif
 
             @if(in_array(auth()->user()->role, ['admin', 'staff']))
-                <a href="{{ route('students.index') }}"
-                   class="{{ request()->routeIs('students.*') ? 'active' : '' }}">
-                    Hồ sơ sinh viên
-                </a>
-            @endif
+                <div class="menu-title">Sinh viên</div>
 
-            <a href="{{ route('room-registrations.index') }}"
-               class="{{ request()->routeIs('room-registrations.*') ? 'active' : '' }}">
-                {{ auth()->user()->role === 'student' ? 'Đăng ký của tôi' : 'Đăng ký chỗ ở' }}
-            </a>
+                @if(\Illuminate\Support\Facades\Route::has('students.index'))
+                    <a href="{{ route('students.index') }}"
+                       class="{{ request()->routeIs('students.*') ? 'active' : '' }}">
+                        Hồ sơ sinh viên
+                    </a>
+                @endif
+
+                @if(\Illuminate\Support\Facades\Route::has('room-registrations.index'))
+                    <a href="{{ route('room-registrations.index') }}"
+                       class="{{ request()->routeIs('room-registrations.*') ? 'active' : '' }}">
+                        Đăng ký chỗ ở
+                    </a>
+                @endif
+
+                <div class="menu-title">Phòng & giường</div>
+
+                @if(\Illuminate\Support\Facades\Route::has('buildings.index'))
+                    <a href="{{ route('buildings.index') }}"
+                       class="{{ request()->routeIs('buildings.*') ? 'active' : '' }}">
+                        Tòa nhà
+                    </a>
+                @endif
+
+                @if(\Illuminate\Support\Facades\Route::has('rooms.index'))
+                    <a href="{{ route('rooms.index') }}"
+                       class="{{ request()->routeIs('rooms.*') ? 'active' : '' }}">
+                        Phòng
+                    </a>
+                @endif
+
+                @if(\Illuminate\Support\Facades\Route::has('beds.index'))
+                    <a href="{{ route('beds.index') }}"
+                       class="{{ request()->routeIs('beds.*') ? 'active' : '' }}">
+                        Giường
+                    </a>
+                @endif
+
+                <div class="menu-title">Xếp ở & hợp đồng</div>
+
+                @if(\Illuminate\Support\Facades\Route::has('member3.registrations.index'))
+                    <a href="{{ route('member3.registrations.index') }}"
+                       class="{{ request()->routeIs('member3.registrations.*') ? 'active' : '' }}">
+                        Xét duyệt đăng ký
+                    </a>
+                @endif
+
+                @if(\Illuminate\Support\Facades\Route::has('member3.allocations.index'))
+                    <a href="{{ route('member3.allocations.index') }}"
+                       class="{{ request()->routeIs('member3.allocations.*') ? 'active' : '' }}">
+                        Xếp giường
+                    </a>
+                @endif
+
+                @if(\Illuminate\Support\Facades\Route::has('member3.contracts.index'))
+                    <a href="{{ route('member3.contracts.index') }}"
+                       class="{{ request()->routeIs('member3.contracts.*') ? 'active' : '' }}">
+                        Hợp đồng
+                    </a>
+                @endif
+
+                @if(\Illuminate\Support\Facades\Route::has('member3.violations.index'))
+                    <a href="{{ route('member3.violations.index') }}"
+                       class="{{ request()->routeIs('member3.violations.*') ? 'active' : '' }}">
+                        Vi phạm
+                    </a>
+                @endif
+
+                <div class="menu-title">Điện nước & hóa đơn</div>
+
+                @if(\Illuminate\Support\Facades\Route::has('utility-readings.index'))
+                    <a href="{{ route('utility-readings.index') }}"
+                       class="{{ request()->routeIs('utility-readings.*') ? 'active' : '' }}">
+                        Chỉ số điện nước
+                    </a>
+                @endif
+
+                @if(\Illuminate\Support\Facades\Route::has('invoices.index'))
+                    <a href="{{ route('invoices.index') }}"
+                       class="{{ request()->routeIs('invoices.*') && !request()->routeIs('invoices.revenue') ? 'active' : '' }}">
+                        Hóa đơn
+                    </a>
+                @endif
+
+                @if(\Illuminate\Support\Facades\Route::has('invoices.revenue'))
+                    <a href="{{ route('invoices.revenue') }}"
+                       class="{{ request()->routeIs('invoices.revenue') ? 'active' : '' }}">
+                        Doanh thu
+                    </a>
+                @endif
+            @elseif(auth()->user()->role === 'student')
+                @if(\Illuminate\Support\Facades\Route::has('students.my-profile') && auth()->user()->student)
+                    <a href="{{ route('students.my-profile') }}"
+                       class="{{ request()->routeIs('students.my-profile') ? 'active' : '' }}">
+                        Hồ sơ của tôi
+                    </a>
+                @endif
+
+                @if(\Illuminate\Support\Facades\Route::has('room-registrations.index'))
+                    <a href="{{ route('room-registrations.index') }}"
+                       class="{{ request()->routeIs('room-registrations.*') ? 'active' : '' }}">
+                        Đăng ký của tôi
+                    </a>
+                @endif
+            @endif
         </nav>
     </aside>
 
     <main class="main">
         <div class="topbar">
             <strong>NHÓM 8 — CSE485</strong>
+
             <div class="actions">
-                <span class="muted">{{ auth()->user()->name }} ({{ auth()->user()->role }})</span>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button class="btn btn-light">Đăng xuất</button>
-                </form>
+                <span class="muted">
+                    {{ auth()->user()->name }}
+                    ({{ auth()->user()->role }})
+                </span>
+
+                @if(\Illuminate\Support\Facades\Route::has('logout'))
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button class="btn btn-light">
+                            Đăng xuất
+                        </button>
+                    </form>
+                @endif
             </div>
         </div>
 
         <div class="content">
             @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
+                <div class="alert alert-success">
+                    {{ session('success') }}
+                </div>
             @endif
 
             @if(session('error'))
-                <div class="alert alert-error">{{ session('error') }}</div>
+                <div class="alert-error">
+                    {{ session('error') }}
+                </div>
             @endif
 
             @if($errors->any())
-                <div class="alert alert-error">
+                <div class="alert-error">
                     <strong>Dữ liệu chưa hợp lệ:</strong>
                     <ul class="errors">
                         @foreach($errors->all() as $error)
@@ -263,5 +372,7 @@
         </div>
     </main>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

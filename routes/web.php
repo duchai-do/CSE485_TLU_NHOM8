@@ -36,3 +36,4 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/member3.php';
+require __DIR__.'/utility_invoice.php';
