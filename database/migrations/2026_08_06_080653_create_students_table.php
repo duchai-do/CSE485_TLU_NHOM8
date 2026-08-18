@@ -24,7 +24,6 @@ return new class extends Migration
             $table->string('phone', 20)->nullable();
             $table->text('address')->nullable();
             $table->string('priority_type', 100)->nullable();
-
             $table->timestamps();
         });
     }

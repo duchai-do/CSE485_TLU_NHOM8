@@ -29,14 +29,9 @@ return new class extends Migration
 
             $table->dateTime('reviewed_at')->nullable();
             $table->text('rejection_reason')->nullable();
-
             $table->timestamps();
 
-            $table->unique([
-                'student_id',
-                'semester',
-                'academic_year',
-            ]);
+            $table->unique(['student_id', 'semester', 'academic_year']);
         });
     }
 

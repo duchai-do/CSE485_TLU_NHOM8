@@ -2,163 +2,92 @@
 
 namespace Database\Seeders;
 
+use App\Models\RoomRegistration;
+use App\Models\Student;
+use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        $now = now();
-
-        // 1. USERS
-        DB::table('users')->insert([
-            [
-                'name' => 'Quản trị viên',
-                'email' => 'admin@tlu.edu.vn',
-                'email_verified_at' => $now,
-                'password' => Hash::make('12345678'),
-                'role' => 'admin',
-                'status' => true,
-                'remember_token' => null,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'Nguyễn Văn An',
-                'email' => 'an@tlu.edu.vn',
-                'email_verified_at' => $now,
-                'password' => Hash::make('12345678'),
-                'role' => 'student',
-                'status' => true,
-                'remember_token' => null,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'Trần Thị Bình',
-                'email' => 'binh@tlu.edu.vn',
-                'email_verified_at' => $now,
-                'password' => Hash::make('12345678'),
-                'role' => 'student',
-                'status' => true,
-                'remember_token' => null,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'Lê Minh Cường',
-                'email' => 'cuong@tlu.edu.vn',
-                'email_verified_at' => $now,
-                'password' => Hash::make('12345678'),
-                'role' => 'student',
-                'status' => true,
-                'remember_token' => null,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
+        $admin = User::create([
+            'name' => 'Quản trị viên',
+            'email' => 'admin@tlu.edu.vn',
+            'password' => '12345678',
+            'role' => 'admin',
+            'status' => true,
         ]);
 
-        // 2. STUDENTS
-        $anUserId = DB::table('users')->where('email', 'an@tlu.edu.vn')->value('id');
-        $binhUserId = DB::table('users')->where('email', 'binh@tlu.edu.vn')->value('id');
-        $cuongUserId = DB::table('users')->where('email', 'cuong@tlu.edu.vn')->value('id');
-
-        DB::table('students')->insert([
-            [
-                'user_id' => $anUserId,
-                'student_code' => 'SV001',
-                'date_of_birth' => '2005-03-15',
-                'gender' => 'Nam',
-                'class_name' => '65HTTT1',
-                'faculty' => 'Công nghệ thông tin',
-                'phone' => '0900000001',
-                'address' => 'Hà Nội',
-                'priority_type' => 'Không',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'user_id' => $binhUserId,
-                'student_code' => 'SV002',
-                'date_of_birth' => '2005-07-20',
-                'gender' => 'Nữ',
-                'class_name' => '65CNTT2',
-                'faculty' => 'Công nghệ thông tin',
-                'phone' => '0900000002',
-                'address' => 'Nam Định',
-                'priority_type' => 'Hộ nghèo',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'user_id' => $cuongUserId,
-                'student_code' => 'SV003',
-                'date_of_birth' => '2004-11-02',
-                'gender' => 'Nam',
-                'class_name' => '65PM1',
-                'faculty' => 'Công nghệ thông tin',
-                'phone' => '0900000003',
-                'address' => 'Thanh Hóa',
-                'priority_type' => 'Con thương binh',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
+        $staff = User::create([
+            'name' => 'Cán bộ ký túc xá',
+            'email' => 'staff@tlu.edu.vn',
+            'password' => '12345678',
+            'role' => 'staff',
+            'status' => true,
         ]);
 
-        // 3. ROOM REGISTRATIONS
-        $anStudentId = DB::table('students')->where('student_code', 'SV001')->value('id');
-        $binhStudentId = DB::table('students')->where('student_code', 'SV002')->value('id');
-        $cuongStudentId = DB::table('students')->where('student_code', 'SV003')->value('id');
-        $adminId = DB::table('users')->where('email', 'admin@tlu.edu.vn')->value('id');
+        $samples = [
+            ['Nguyễn Văn An', 'an@tlu.edu.vn', 'SV001', '2005-03-15', 'Nam', '65HTTT1', null],
+            ['Trần Thị Bình', 'binh@tlu.edu.vn', 'SV002', '2005-07-20', 'Nữ', '65CNTT2', 'Hộ nghèo'],
+            ['Lê Minh Cường', 'cuong@tlu.edu.vn', 'SV003', '2004-11-02', 'Nam', '65PM1', 'Con thương binh'],
+        ];
 
-        DB::table('room_registrations')->insert([
-            [
-                'student_id' => $anStudentId,
-                'semester' => '1',
-                'academic_year' => '2026-2027',
-                'preferred_room_type' => 'Phòng 4 người',
-                'priority_score' => 0,
-                'status' => 'pending',
-                'note' => 'Mong muốn ở gần khu học tập.',
-                'reviewed_by' => null,
-                'reviewed_at' => null,
-                'rejection_reason' => null,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'student_id' => $binhStudentId,
-                'semester' => '1',
-                'academic_year' => '2026-2027',
-                'preferred_room_type' => 'Phòng 6 người',
-                'priority_score' => 10,
-                'status' => 'approved',
-                'note' => 'Sinh viên thuộc diện ưu tiên.',
-                'reviewed_by' => $adminId,
-                'reviewed_at' => $now,
-                'rejection_reason' => null,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'student_id' => $cuongStudentId,
-                'semester' => '1',
-                'academic_year' => '2026-2027',
-                'preferred_room_type' => 'Phòng 4 người',
-                'priority_score' => 8,
-                'status' => 'rejected',
-                'note' => 'Đăng ký chỗ ở học kỳ 1.',
-                'reviewed_by' => $adminId,
-                'reviewed_at' => $now,
-                'rejection_reason' => 'Tạm thời chưa còn loại phòng phù hợp.',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
+        $students = collect($samples)->map(function ($row, $index) {
+            $user = User::create([
+                'name' => $row[0],
+                'email' => $row[1],
+                'password' => '12345678',
+                'role' => 'student',
+                'status' => true,
+            ]);
+
+            return Student::create([
+                'user_id' => $user->id,
+                'student_code' => $row[2],
+                'date_of_birth' => $row[3],
+                'gender' => $row[4],
+                'class_name' => $row[5],
+                'faculty' => 'Công nghệ thông tin',
+                'phone' => '090000000'.($index + 1),
+                'address' => ['Hà Nội', 'Nam Định', 'Thanh Hóa'][$index],
+                'priority_type' => $row[6],
+            ]);
+        });
+
+        RoomRegistration::create([
+            'student_id' => $students[0]->id,
+            'semester' => '1',
+            'academic_year' => '2026-2027',
+            'preferred_room_type' => 'Phòng 4 người',
+            'priority_score' => 0,
+            'status' => 'pending',
+            'note' => 'Mong muốn ở gần khu học tập.',
+        ]);
+
+        RoomRegistration::create([
+            'student_id' => $students[1]->id,
+            'semester' => '1',
+            'academic_year' => '2026-2027',
+            'preferred_room_type' => 'Phòng 6 người',
+            'priority_score' => 10,
+            'status' => 'approved',
+            'note' => 'Sinh viên thuộc diện ưu tiên.',
+            'reviewed_by' => $staff->id,
+            'reviewed_at' => now(),
+        ]);
+
+        RoomRegistration::create([
+            'student_id' => $students[2]->id,
+            'semester' => '1',
+            'academic_year' => '2026-2027',
+            'preferred_room_type' => 'Phòng 4 người',
+            'priority_score' => 8,
+            'status' => 'rejected',
+            'note' => 'Đăng ký chỗ ở học kỳ 1.',
+            'reviewed_by' => $admin->id,
+            'reviewed_at' => now(),
+            'rejection_reason' => 'Tạm thời chưa còn loại phòng phù hợp.',
         ]);
     }
 }

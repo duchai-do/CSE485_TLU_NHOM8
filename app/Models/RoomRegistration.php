@@ -25,6 +25,7 @@ class RoomRegistration extends Model
     protected function casts(): array
     {
         return [
+            'priority_score' => 'integer',
             'reviewed_at' => 'datetime',
         ];
     }
